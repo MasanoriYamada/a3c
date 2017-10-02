@@ -10,11 +10,12 @@ import numpy as np
 
 import chainer.functions as F
 
-from a3c.constants import GAMMA
+from a3c.pi_and_v_function import A3CFFSoftmaxFFF
 from a3c.pi_and_v_function import get_entropy
 from a3c.pi_and_v_function import sampled_actions_log_probs
 from a3c.pi_and_v_function import sampled_action
 
+from a3c.constants import GAMMA
 from a3c.constants import T_MAX
 from a3c.constants import CLIP_REWARD_IS
 from a3c.constants import ENTROPY_BETA
@@ -41,7 +42,8 @@ class Agent_a3c(object):
     def __init__(self, model, phi, optimizer):
         self.logger = logging.getLogger(__name__)
         self.shared_model = model
-        self.model = copy.deepcopy(self.shared_model)
+        #self.model = copy.deepcopy(self.shared_model)
+        self.model = A3CFFSoftmaxFFF(model.obs_space, model.n_action)
         self.phi = phi
         self.clip_reward = CLIP_REWARD_IS
         self.t_max = T_MAX
