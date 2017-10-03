@@ -29,7 +29,8 @@ def phi(obs):
 
 def main():
 
-    env = gym.make('CartPole-v0')
+    env_name = 'CartPole-v0'
+    env = gym.make(env_name)
     action_space = env.action_space.n
     observation_space = env.observation_space.low.shape
     # set logger
@@ -38,14 +39,14 @@ def main():
     logger.info('START')
 
     # set network model
-    model = A3CFFSoftmaxFFF(observation_space, action_space)
+    shared_model = A3CFFSoftmaxFFF(observation_space, action_space)
     # set optimizer
     opt = RMSpropAsync(lr=LEARNING_RATE , alpha=0.99 , eps=RMSPROP_EPS)
-    opt.setup(model)
+    opt.setup(shared_model)
     opt.add_hook(chainer.optimizer.GradientClipping(40))
 
-    agent =  Agent_a3c(model, phi, opt)
-    async_train(env, agent)
+    agent =  Agent_a3c(shared_model, phi, opt)
+    async_train(env_name, agent)
 
     logger.info('END')
 

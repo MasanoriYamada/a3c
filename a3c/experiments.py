@@ -7,6 +7,7 @@ import signal
 import datetime
 import os
 import numpy as np
+import gym
 
 from tensorboard import SummaryWriter
 from a3c.constants import MAX_EPISODE_LEN
@@ -41,12 +42,12 @@ def evaluate(env, agent):
             obs, r, done, info = env.step(a)
             local_r_sum += r
 
-def async_train(env, agent):
+def async_train(env_name, agent):
     logger = logging.getLogger(__name__)
 
     training_threads = []
     for i in range(N_THREADS):
-        training_threads.append(threading.Thread(target=train_loop, args=(i, env, agent)))
+        training_threads.append(threading.Thread(target=train_loop, args=(i, env_name, agent)))
 
     for i, th in enumerate(training_threads):
         logger.info('start thread_id : {}'.format(i))
@@ -66,8 +67,9 @@ def async_train(env, agent):
     agent.save_model(output_model_path)
     logger.info('model saved')
 
-def train_loop(thread_id, env, agent):
+def train_loop(thread_id, env_name, agent):
     logger = logging.getLogger(__name__)
+    agent.generagte_local_model(thread_id)
 
     done = False
     episode = 0
@@ -75,6 +77,7 @@ def train_loop(thread_id, env, agent):
     step = 0
     global_step = 0
     local_r_sum = 0
+    env = gym.make(env_name)
     obs = env.reset()
 
     # set writer
@@ -88,6 +91,11 @@ def train_loop(thread_id, env, agent):
             if thread_id == 0:
                 logger.info('episode: {}, r_sum: {}, total step in episode: {}'.format(episode, local_r_sum, step))
                 writer.add_scalar('reward_sum', local_r_sum, episode)
+                writer.add_scalar('V', agent.shared_V_out.data, episode)
+                writer.add_scalar('A', agent.A.data, episode)
+                writer.add_scalar('loss_v', agent.V_loss.data, episode)
+                writer.add_scalar('loss_pi', agent.pi_loss.data, episode)
+                writer.add_scalar('loss_entropy', agent.entropy_loss.data, episode)
                 if episode % EVAL_INTERVAL == 0:
                     evaluate(env, agent)
             r = 0

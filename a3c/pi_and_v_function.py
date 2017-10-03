@@ -45,11 +45,13 @@ class A3CFFSoftmaxFFF(chainer.Chain):
         super(A3CFFSoftmaxFFF, self).__init__()
         with self.init_scope():
             self.fc1 = L.Linear(self.obs_space[0], 256)
+            self.fc11 = L.Linear(256, 256)
             self.fc2 = L.Linear(256, self.n_action)  # pi
             self.fc3 = L.Linear(256, 1)  # v
 
     def get_pi_and_v(self, state):
         h1 = F.relu(self.fc1(state))
+        h1 = F.relu(self.fc11(h1))
         pi = F.softmax(self.fc2(h1), axis=1)  # action axis
         v = self.fc3(h1)
         #self.logger.debug('pi: {}'.format(pi.data))
