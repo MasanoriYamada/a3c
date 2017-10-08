@@ -94,7 +94,7 @@ class Agent_a3c(object):
         #if not is_state_terminal:
             # make batch dimension
         statevar = chainer.Variable(np.expand_dims(self.phi(state), axis=0))
-        self.past_rewards[self.t-1] = reward
+        self.past_rewards[self.t-1] = float(reward)
 
         if (is_state_terminal and self.t_start < self.t) or self.t - self.t_start == self.t_max:
             assert self.t_start < self.t

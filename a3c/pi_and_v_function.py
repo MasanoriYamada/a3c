@@ -6,6 +6,7 @@ import numpy as np
 import chainer
 import chainer.links as L
 import chainer.functions as F
+from tensorboard import name_scope, within_name_scope
 
 
 class A3CFFSoftmaxCCFFF(chainer.Chain):
@@ -45,17 +46,19 @@ class A3CFFSoftmaxFFF(chainer.Chain):
         super(A3CFFSoftmaxFFF, self).__init__()
         with self.init_scope():
             self.fc1 = L.Linear(self.obs_space[0], 256)
-            self.fc11 = L.Linear(256, 256)
             self.fc2 = L.Linear(256, self.n_action)  # pi
             self.fc3 = L.Linear(256, 1)  # v
 
+    @within_name_scope('A3CFFSoftmaxFFF')
     def get_pi_and_v(self, state):
-        h1 = F.relu(self.fc1(state))
-        h1 = F.relu(self.fc11(h1))
-        pi = F.softmax(self.fc2(h1), axis=1)  # action axis
-        v = self.fc3(h1)
-        #self.logger.debug('pi: {}'.format(pi.data))
-        #self.logger.debug('V: {}'.format(v.data))
+        with name_scope('fc1', self.fc1.params()):
+            h1 = F.relu(self.fc1(state))
+        with name_scope('fc2', self.fc2.params()):
+            pi = F.softmax(self.fc2(h1), axis=1)  # action axis
+        with name_scope('fc3', self.fc3.params()):
+            v = self.fc3(h1)
+            #self.logger.debug('pi: {}'.format(pi.data))
+            #self.logger.debug('V: {}'.format(v.data))
         return pi, v
 
     def reset_state(self):
